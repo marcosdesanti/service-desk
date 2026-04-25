@@ -1,0 +1,122 @@
+{
+	"_type": "export",
+	"__export_format": 4,
+	"__export_date": "2026-04-25T00:00:00.000Z",
+	"__export_source": "insomnia.desktop.app:v2023.5.8",
+	"resources": [
+		{
+			"_id": "wrk_service_desk",
+			"parentId": null,
+			"modified": 1714000000000,
+			"created": 1714000000000,
+			"name": "Service-Desk NetLogin V2",
+			"description": "API corrigida com headers de Content-Type",
+			"scope": "collection",
+			"_type": "workspace"
+		},
+		{
+			"_id": "env_local",
+			"parentId": "wrk_service_desk",
+			"modified": 1714000000000,
+			"created": 1714000000000,
+			"name": "Local Environment",
+			"data": {
+				"base_url": "http://localhost:8000/api",
+				"bearer_token": "COLE_O_TOKEN_AQUI_APOS_LOGIN"
+			},
+			"dataPropertyOrder": {
+				"&": ["base_url", "bearer_token"]
+			},
+			"color": "#4caf50",
+			"isPrivate": false,
+			"_type": "environment"
+		},
+		{
+			"_id": "req_login",
+			"parentId": "wrk_service_desk",
+			"modified": 1714000000000,
+			"created": 1714000000000,
+			"url": "{{ _.base_url }}/v1/login",
+			"name": "1. Login (Gerar Token)",
+			"description": "Envia credenciais para obter o Bearer Token",
+			"method": "POST",
+			"body": {
+				"mimeType": "application/json",
+				"text": "{\n  \"email\": \"admin@netlogin.com.br\",\n  \"password\": \"password\",\n  \"device_name\": \"insomnia_dev\"\n}"
+			},
+			"parameters": [],
+			"headers": [
+				{
+					"name": "Accept",
+					"value": "application/json"
+				},
+				{
+					"name": "Content-Type",
+					"value": "application/json"
+				}
+			],
+			"authentication": {},
+			"metaSortKey": -1714000000000,
+			"isPrivate": false,
+			"_type": "request"
+		},
+		{
+			"_id": "req_user_test",
+			"parentId": "wrk_service_desk",
+			"modified": 1714000000000,
+			"created": 1714000000000,
+			"url": "{{ _.base_url }}/user",
+			"name": "2. Testar Usuário Logado",
+			"description": "Valida se o token está sendo aceito pelo Sanctum",
+			"method": "GET",
+			"body": {},
+			"parameters": [],
+			"headers": [
+				{
+					"name": "Accept",
+					"value": "application/json"
+				},
+				{
+					"name": "Content-Type",
+					"value": "application/json"
+				}
+			],
+			"authentication": {
+				"type": "bearer",
+				"token": "{{ _.bearer_token }}"
+			},
+			"metaSortKey": -1713000000000,
+			"isPrivate": false,
+			"_type": "request"
+		},
+		{
+			"_id": "req_validate_contact",
+			"parentId": "wrk_service_desk",
+			"modified": 1714000000000,
+			"created": 1714000000000,
+			"url": "{{ _.base_url }}/v1/validate-contact/5516999999999",
+			"name": "3. Validar Contato (n8n)",
+			"description": "Consulta se o telefone pertence a um Tenant ativo",
+			"method": "GET",
+			"body": {},
+			"parameters": [],
+			"headers": [
+				{
+					"name": "Accept",
+					"value": "application/json"
+				},
+				{
+					"name": "Content-Type",
+					"value": "application/json"
+				}
+			],
+			"authentication": {
+				"type": "bearer",
+				"token": "{{ _.bearer_token }}"
+			},
+			"metaSortKey": -1712000000000,
+			"isPrivate": false,
+			"_type": "request"
+		}
+	]
+}
