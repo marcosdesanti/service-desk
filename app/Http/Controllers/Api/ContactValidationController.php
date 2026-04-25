@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ApiLog;
 use App\Models\Contact;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,7 @@ class ContactValidationController extends Controller
      */
     public function __invoke(Request $request, string $phone): JsonResponse
     {
+         $startTime = microtime(true);   
         // 1. Sanitização: Deixa apenas números (remove +, -, espaços, parênteses)
         $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
 
@@ -39,7 +41,7 @@ class ContactValidationController extends Controller
 
         // 4. Resposta de sucesso (Mesmo que o status seja "blocked" ou "pending")
         // O n8n usará o campo 'authorized' para decidir o fluxo
-        return response()->json([
+       $response = response()->json([
             'authorized' => $contact->status === 'authorized',
             'status' => $contact->status,
             'contact_name' => $contact->name,
@@ -51,6 +53,18 @@ class ContactValidationController extends Controller
             // Útil para o n8n saber se deve processar como Master ou Cliente
             'is_master_tenant' => (bool) ($contact->tenant->is_master ?? false),
         ]);
+        // Registrar o log antes de retornar
+        ApiLog::create([
+            'tenant_id' => $contact?->tenant_id,
+            'endpoint' => $request->path(),
+            'method' => $request->method(),
+            'payload_received' => $phone,
+            'status_code' => $response->getStatusCode(),
+            'authorized' => $contact ? ($contact->status === 'authorized') : false,
+            'response_time_ms' => (int) ((microtime(true) - $startTime) * 1000),
+            'ip_address' => $request->ip(),
+        ]);
+        return $response;
     }
 
     /**
