@@ -12,6 +12,8 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
+//use Illuminate\Container\Attributes\Auth;
+use Illuminate\Support\Facades\Auth;
 
 class TenantsTable
 {
@@ -28,6 +30,14 @@ class TenantsTable
                     ->searchable(),
                 TextColumn::make('tax_id')
                     ->searchable(),
+
+                // Coluna visível apenas para a NetLogin Brasil
+                TextColumn::make('tenant.name')
+                    ->label('Empresa Cliente')
+                    ->badge()
+                    ->color('gray')
+                    ->visible(fn () => Auth::user() && Auth::user()->isMasterAdmin()),
+
                 IconColumn::make('is_active')
                     ->boolean(),
                 IconColumn::make('is_master')
