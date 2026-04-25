@@ -20,8 +20,11 @@ class ContactValidationController extends Controller
         // 1. Sanitização: Deixa apenas números (remove +, -, espaços, parênteses)
         $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
 
+        // 2. Gera variações para lidar com o 9º dígito (Brasil: 55 + DDD + 9 + Número)
+        $possibleNumbers = $this->getPhoneVariations($cleanPhone);
+
         // 2. Busca o contato e carrega o relacionamento com a empresa (Tenant)
-        $contact = Contact::where('phone_number', $cleanPhone)
+        $contact = Contact::where('phone_number', $possibleNumbers)
             ->with('tenant')
             ->first();
 
@@ -48,5 +51,29 @@ class ContactValidationController extends Controller
             // Útil para o n8n saber se deve processar como Master ou Cliente
             'is_master_tenant' => (bool) ($contact->tenant->is_master ?? false),
         ]);
+    }
+
+    /**
+     * Gera variações de números brasileiros para ignorar erros de 9º dígito.
+     */
+    private function getPhoneVariations(string $phone): array
+    {
+        $variations = [$phone];
+
+        // Se for um número brasileiro (DDI 55)
+        if (str_starts_with($phone, '55') && strlen($phone) >= 12) {
+            $ddd = substr($phone, 2, 2);
+            $rest = substr($phone, 4);
+
+            if (strlen($phone) === 13 && $rest[0] === '9') {
+                // Tem 13 dígitos e começa com 9: gera versão SEM o 9
+                $variations[] = '55' . $ddd . substr($rest, 1);
+            } elseif (strlen($phone) === 12) {
+                // Tem 12 dígitos: gera versão COM o 9
+                $variations[] = '55' . $ddd . '9' . $rest;
+            }
+        }
+
+        return array_unique($variations);
     }
 }
