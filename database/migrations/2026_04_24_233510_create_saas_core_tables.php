@@ -10,7 +10,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // 1. Tenants Table
+        // Tenants Table
         Schema::create('tenants', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name');
@@ -22,7 +22,7 @@ return new class extends Migration
             $table->softDeletes();
         });
 
-        // 2. Users Table (Re-created as UUID)
+        // Users Table
         Schema::create('users', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('tenant_id')->nullable()->constrained('tenants')->onDelete('cascade');
@@ -36,7 +36,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // 3. Contacts Table
+        // Contacts Table (White-list)
         Schema::create('contacts', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->foreignUuid('tenant_id')->nullable()->constrained('tenants')->onDelete('cascade');

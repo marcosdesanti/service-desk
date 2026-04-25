@@ -1,21 +1,29 @@
 #!/bin/bash
 
+# Cores para feedback
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
+RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${BLUE}🚀 Fixing Database Schema & Running Professional Foundation...${NC}"
+echo -e "${BLUE}🚀 Reiniciando Fundação Service-Desk (Versão Definitiva)...${NC}"
 
-# 1. Remover migrações antigas de usuários e tenants para evitar conflitos
-# Queremos que o Laravel crie a tabela de usuários já com UUID
-rm -f database/migrations/*_create_users_table.php
-rm -f database/migrations/*_create_tenants*.php
-rm -f database/migrations/*_create_contacts*.php
+# 1. Limpeza Radical de Migrations Antigas
+# Removemos tudo para garantir que o esquema UUID e as tabelas de sistema fiquem em ordem
+rm -f database/migrations/*.php
 
-# 2. Nova Migration Unificada: Users, Tenants e Contacts (All UUID)
-# Criamos os tenants primeiro para que a FK em users funcione na criação
+# 2. Migration 01: Tabelas de Sistema do Laravel (Inglês)
+# Recriamos as tabelas que o framework exige para sessões e filas
+echo -e "${BLUE}📦 Gerando tabelas de sistema (sessions, jobs)...${NC}"
+php artisan session:table
+php artisan queue:table
+php artisan queue:failed-table
+
+# 3. Migration 02: Esquema SaaS Unificado (UUID)
+# Criado com sleep para garantir que o timestamp seja posterior às tabelas de sistema
+sleep 1
 CAT_DATE=$(date +%Y_%m_%d_%H%M%S)
-cat <<EOF > database/migrations/${CAT_DATE}_base_saas_schema.php
+cat <<EOF > database/migrations/${CAT_DATE}_create_saas_core_tables.php
 <?php
 
 declare(strict_types=1);
@@ -28,7 +36,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // 1. Tenants Table
+        // Tenants Table
         Schema::create('tenants', function (Blueprint \$table) {
             \$table->uuid('id')->primary();
             \$table->string('name');
@@ -40,7 +48,7 @@ return new class extends Migration
             \$table->softDeletes();
         });
 
-        // 2. Users Table (Re-created as UUID)
+        // Users Table
         Schema::create('users', function (Blueprint \$table) {
             \$table->uuid('id')->primary();
             \$table->foreignUuid('tenant_id')->nullable()->constrained('tenants')->onDelete('cascade');
@@ -54,7 +62,7 @@ return new class extends Migration
             \$table->timestamps();
         });
 
-        // 3. Contacts Table
+        // Contacts Table (White-list)
         Schema::create('contacts', function (Blueprint \$table) {
             \$table->uuid('id')->primary();
             \$table->foreignUuid('tenant_id')->nullable()->constrained('tenants')->onDelete('cascade');
@@ -75,18 +83,23 @@ return new class extends Migration
 };
 EOF
 
-# 3. Executar limpeza total do banco de dados
-echo -e "${BLUE}⚙️ Cleaning and Migrating...${NC}"
-# No SQLite, as vezes é melhor apagar o arquivo e recriar
+# 4. Limpeza e Migração do Banco
+echo -e "${BLUE}⚙️ Resetando banco de dados SQLite...${NC}"
 if [ -f database/database.sqlite ]; then
     rm database/database.sqlite
-    touch database/database.sqlite
 fi
+touch database/database.sqlite
 
-php artisan migrate:fresh
+php artisan migrate --force
 
-# 4. Executar o Seeder
-echo -e "${BLUE}🌱 Seeding Foundation Data...${NC}"
+# 5. Execução do Seeder
+echo -e "${BLUE}🌱 Semeando dados da NetLogin Brasil...${NC}"
 php artisan db:seed --class=FoundationSeeder
 
-echo -e "${GREEN}✅ System Rebuilt Successfully with UUID compliance!${NC}"
+# 6. Criação dos Resources do Filament (Se ainda não existirem)
+echo -e "${BLUE}🎨 Verificando Resources do Filament...${NC}"
+php artisan make:filament-resource Tenant --simple --quiet
+php artisan make:filament-resource Contact --quiet
+
+echo -e "${GREEN}✅ Tudo pronto! Sessões, Filas e SaaS Core configurados.${NC}"
+echo -e "${BLUE}👉 Acesse o painel e use: admin@netlogin.com.br / password${NC}"
