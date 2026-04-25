@@ -1,17 +1,19 @@
 <?php
 
-namespace App\Filament\Resources\Contacts\Tables;
+namespace App\Filament\Resources\Tenants\Tables;
 
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ForceDeleteBulkAction;
 use Filament\Actions\RestoreBulkAction;
+use Filament\Actions\ViewAction;
+use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 
-class ContactsTable
+class TenantsTable
 {
     public static function configure(Table $table): Table
     {
@@ -20,14 +22,16 @@ class ContactsTable
                 TextColumn::make('id')
                     ->label('ID')
                     ->searchable(),
-                TextColumn::make('tenant.name')
-                    ->searchable(),
                 TextColumn::make('name')
                     ->searchable(),
-                TextColumn::make('phone_number')
+                TextColumn::make('slug')
                     ->searchable(),
-                TextColumn::make('status')
+                TextColumn::make('tax_id')
                     ->searchable(),
+                IconColumn::make('is_active')
+                    ->boolean(),
+                IconColumn::make('is_master')
+                    ->boolean(),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -45,6 +49,7 @@ class ContactsTable
                 TrashedFilter::make(),
             ])
             ->recordActions([
+                ViewAction::make(),
                 EditAction::make(),
             ])
             ->toolbarActions([

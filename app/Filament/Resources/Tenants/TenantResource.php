@@ -2,24 +2,24 @@
 
 namespace App\Filament\Resources\Tenants;
 
-use App\Filament\Resources\Tenants\Pages\ManageTenants;
+use App\Filament\Resources\Tenants\Pages\CreateTenant;
+use App\Filament\Resources\Tenants\Pages\EditTenant;
+use App\Filament\Resources\Tenants\Pages\ListTenants;
+use App\Filament\Resources\Tenants\Pages\ViewTenant;
+use App\Filament\Resources\Tenants\Schemas\TenantForm;
+use App\Filament\Resources\Tenants\Schemas\TenantInfolist;
+use App\Filament\Resources\Tenants\Tables\TenantsTable;
+
 use App\Models\Tenant;
 use BackedEnum;
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteAction;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ForceDeleteAction;
-use Filament\Actions\ForceDeleteBulkAction;
-use Filament\Actions\RestoreAction;
-use Filament\Actions\RestoreBulkAction;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
-use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
+
 
 class TenantResource extends Resource
 {
@@ -27,42 +27,44 @@ class TenantResource extends Resource
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
 
+    protected static ?string $recordTitleAttribute = 'Empresa (Tenant)';
+
+    public static function canViewAny(): bool
+    {
+        /** @var \App\Models\User|null $user */
+        $user = Auth::user();        
+        return $user && $user->tenant && $user->tenant->is_master;
+    }
+
     public static function form(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                //
-            ]);
+        return TenantForm::configure($schema);
+    }
+
+    public static function infolist(Schema $schema): Schema
+    {
+        return TenantInfolist::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return $table
-            ->columns([
-                //
-            ])
-            ->filters([
-                TrashedFilter::make(),
-            ])
-            ->recordActions([
-                EditAction::make(),
-                DeleteAction::make(),
-                ForceDeleteAction::make(),
-                RestoreAction::make(),
-            ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                    ForceDeleteBulkAction::make(),
-                    RestoreBulkAction::make(),
-                ]),
-            ]);
+        return TenantsTable::configure($table);
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            //
+        ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => ManageTenants::route('/'),
+            'index' => ListTenants::route('/'),
+            'create' => CreateTenant::route('/create'),
+            'view' => ViewTenant::route('/{record}'),
+            'edit' => EditTenant::route('/{record}/edit'),
         ];
     }
 

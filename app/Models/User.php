@@ -41,4 +41,9 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Tenant::class);
     }
+    public function isMasterAdmin(): bool
+    {
+        // Usamos o optional() para evitar erro se o tenant for nulo
+        return (bool) optional($this->tenant)->is_master;
+    }
 }
